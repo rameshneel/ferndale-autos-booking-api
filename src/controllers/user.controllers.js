@@ -3,9 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
-import {
-  sendPasswordResetEmail,
-} from "../utils/userforEmail.js";
+import { sendPasswordResetEmail } from "../utils/userforEmail.js";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -26,8 +24,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
 };
 const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log("email",email    ,"pas",password);
-  
+  console.log("email", email, "pas", password);
 
   if (!(email && password)) {
     throw new ApiError(400, "All input is required");
@@ -37,8 +34,8 @@ const loginUser = asyncHandler(async (req, res, next) => {
     const user = await User.findOne({
       $or: [{ email }],
     });
-   console.log("uaweg",user);
-   
+    console.log("uaweg", user);
+
     if (!user) {
       throw new ApiError(404, "User does not exist");
     }
@@ -54,38 +51,43 @@ const loginUser = asyncHandler(async (req, res, next) => {
       "-password -refreshToken"
     );
 
+    const options = {
+      httpOnly: true, // Ensures the cookie is not accessible via JavaScript
+      secure: false, // Should be false in local development (secure cookies require HTTPS)
+      sameSite: "Lax", // Use 'Lax' or 'Strict' for local development
+    };
+
     // const options = {
     //   httpOnly: true,
     //   secure: false,
     //   sameSite: "None",
+    //   path: "/",
     // };
-    const options = {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'None',
-      path: '/', 
-    };
-    
+
     return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, { ...options, maxAge: 7 * 24 * 60 * 60 * 1000 })
-    .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully"));
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, {
+        ...options,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      })
+      .json(
+        new ApiResponse(
+          200,
+          { user: loggedInUser, accessToken, refreshToken },
+          "User logged in successfully"
+        )
+      );
   } catch (error) {
     return next(error);
   }
 });
 const registerUser = asyncHandler(async (req, res, next) => {
-  const {
-    fullName,
-    email,
-    password,
-    mobileNo,
-  } = req.body;
+  const { fullName, email, password, mobileNo } = req.body;
 
   try {
     if (
-      [fullName, email, password,  mobileNo].some(
+      [fullName, email, password, mobileNo].some(
         (field) => field?.trim() === ""
       )
     ) {
@@ -149,8 +151,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true, // Ye true tab set karen jab aap HTTPS use kar rahe hain
-    sameSite: 'None', // SameSite option ko match karen jo login ke dauran use hua tha
-    path: '/', // Path ko match karen jo login ke dauran use hua tha
+    sameSite: "None", // SameSite option ko match karen jo login ke dauran use hua tha
+    path: "/", // Path ko match karen jo login ke dauran use hua tha
   };
 
   return res
@@ -212,9 +214,9 @@ const forgetPasswordToken = asyncHandler(async (req, res, next) => {
 });
 const resetPasswordForForget = asyncHandler(async (req, res) => {
   const { password, confirmPassword } = req.body;
-  console.log("pass" ,password);
-  console.log("pass" ,confirmPassword);
-  
+  console.log("pass", password);
+  console.log("pass", confirmPassword);
+
   const { token } = req.query;
 
   if (
@@ -256,7 +258,11 @@ const updateAccountDetails = asyncHandler(async (req, res, next) => {
     const { fullName, email, mobileNo } = req.body;
 
     // Check if all fields are empty
-    if (![fullName, mobileNo, ].some(field => field !== undefined && field.trim() !== '')) {
+    if (
+      ![fullName, mobileNo].some(
+        (field) => field !== undefined && field.trim() !== ""
+      )
+    ) {
       throw new ApiError(400, "At least one field is required for update");
     }
     const user = await User.findByIdAndUpdate(
@@ -269,7 +275,7 @@ const updateAccountDetails = asyncHandler(async (req, res, next) => {
         },
       },
       { new: true }
-    )
+    );
     if (!user) {
       throw new ApiError(404, "User not found");
     }
@@ -287,26 +293,32 @@ const refreshToken = asyncHandler(async (req, res) => {
   const { refreshToken } = req.cookies;
 
   if (!refreshToken) {
-    throw new ApiError(401, 'Refresh token missing');
+    throw new ApiError(401, "Refresh token missing");
   }
 
   try {
-    const { userId } = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const { userId } = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
     const user = await User.findById(userId);
 
     if (!user || user.refreshToken !== refreshToken) {
-      throw new ApiError(401, 'Invalid refresh token');
+      throw new ApiError(401, "Invalid refresh token");
     }
 
     const { accessToken } = generateTokens(userId);
-    res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'None' });
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+    });
 
     res.status(200).json({ accessToken });
   } catch (error) {
-    throw new ApiError(401, 'Invalid or expired refresh token');
+    throw new ApiError(401, "Invalid or expired refresh token");
   }
 });
-
 
 export {
   registerUser,
@@ -315,5 +327,5 @@ export {
   forgetPassword,
   forgetPasswordToken,
   resetPasswordForForget,
-  updateAccountDetails
+  updateAccountDetails,
 };

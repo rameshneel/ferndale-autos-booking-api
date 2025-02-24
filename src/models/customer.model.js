@@ -38,7 +38,6 @@ const customerSchema = new mongoose.Schema(
     registrationNo: { type: String, required: true },
     awareOfCancellationPolicy: {
       type: Boolean,
-      required: true,
       default: false,
     },
     howDidYouHearAboutUs: {
@@ -59,7 +58,6 @@ const customerSchema = new mongoose.Schema(
         "MSN",
         "Other",
       ],
-      required: true,
     },
     paymentMethod: {
       type: String,

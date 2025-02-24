@@ -12,7 +12,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://localhost:3000",
+      "https://localhost:5000",
       "http://localhost:5173",
       "https://www.sandbox.paypal.com",
       "https://zacsgutters.vercel.app",
@@ -42,19 +42,17 @@ app.get("/", (req, res) => {
   res.render("bookingForm");
 });
 
-
-
 //routes import
 import userRouter from "./routes/user.routes.js";
 import customerRoutes from "./routes/customer.routes.js";
 import paymentRoute from "./routes/payment.route.js";
-import authRoutes  from "./routes/auth.routes.js"
+import authRoutes from "./routes/auth.routes.js";
 
 //routes declaration
 app.use("/api/users", userRouter);
 app.use("/api/customers", customerRoutes);
-app.use("/", paymentRoute);
-app.use('/api', authRoutes);
+app.use("/api/payments", paymentRoute);
+app.use("/api/auth", authRoutes);
 
 function errorHandler(err, req, res, next) {
   if (err instanceof ApiError) {

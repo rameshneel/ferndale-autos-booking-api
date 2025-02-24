@@ -59,7 +59,6 @@ const getcustomerBooking = asyncHandler(async (req, res, next) => {
         { email: { $regex: regex } },
         { contactNumber: { $regex: regex } },
         { selectedTimeSlot: { $regex: regex } },
-        { selectService: { $regex: regex } },
         { paymentMethod: { $regex: regex } },
         { paymentStatus: { $regex: regex } },
         { refundStatus: { $regex: regex } },
@@ -176,10 +175,7 @@ const createCustomerByAdmin = asyncHandler(async (req, res, next) => {
       selectedTimeSlot,
       makeAndModel,
       registrationNo,
-      awareOfCancellationPolicy,
-      howDidYouHearAboutUs,
       paymentMethod,
-      bookedBy, // this should be admin for admin bookings
     } = req.body;
     console.log(req.body);
 
@@ -191,9 +187,7 @@ const createCustomerByAdmin = asyncHandler(async (req, res, next) => {
       !selectedDate ||
       !selectedTimeSlot ||
       !makeAndModel ||
-      !registrationNo ||
-      !howDidYouHearAboutUs ||
-      !paymentMethod
+      !registrationNo
     ) {
       throw new ApiError(400, "Required fields are missing.");
     }
@@ -243,10 +237,10 @@ const createCustomerByAdmin = asyncHandler(async (req, res, next) => {
       totalPrice,
       makeAndModel,
       registrationNo,
-      awareOfCancellationPolicy,
-      howDidYouHearAboutUs,
-      paymentMethod,
-      bookedBy: "admin", // Always set bookedBy as "admin"
+      paymentStatus: "completed",
+      totalPrice: "43.20",
+      paymentMethod: "Cash",
+      bookedBy: "admin",
     });
     await newCustomer.save();
 
@@ -279,23 +273,18 @@ const updateCustomerByAdmin = asyncHandler(async (req, res, next) => {
   try {
     const { customerId } = req.params;
     const {
-      customerName,
+      firstName,
+      lastName,
       email,
       contactNumber,
-      firstLineOfAddress,
-      town,
-      postcode,
       selectedDate,
       selectedTimeSlot,
-      selectService,
-      gutterCleaningOptions,
-      gutterRepairsOptions,
-      selectHomeType,
-      selectHomeStyle,
-      numberOfBedrooms,
-      numberOfStories,
+      makeAndModel,
+      registrationNo,
+      awareOfCancellationPolicy,
+      howDidYouHearAboutUs,
       paymentMethod,
-      message,
+      totalPrice,
     } = req.body;
 
     // Find the existing customer booking
@@ -341,39 +330,24 @@ const updateCustomerByAdmin = asyncHandler(async (req, res, next) => {
       }
     }
 
-    // Update fields
-    existingCustomer.customerName =
-      customerName || existingCustomer.customerName;
-    existingCustomer.email = email || existingCustomer.email;
-    existingCustomer.contactNumber =
-      contactNumber || existingCustomer.contactNumber;
-    existingCustomer.firstLineOfAddress =
-      firstLineOfAddress || existingCustomer.firstLineOfAddress;
-    existingCustomer.town = town || existingCustomer.town;
-    existingCustomer.postcode = postcode || existingCustomer.postcode;
-    existingCustomer.selectedDate =
-      selectedDate || existingCustomer.selectedDate;
-    existingCustomer.selectedTimeSlot =
-      selectedTimeSlot || existingCustomer.selectedTimeSlot;
-    existingCustomer.selectService =
-      selectService || existingCustomer.selectService;
-    existingCustomer.gutterCleaningOptions =
-      gutterCleaningOptions || existingCustomer.gutterCleaningOptions;
-    existingCustomer.gutterRepairsOptions =
-      gutterRepairsOptions || existingCustomer.gutterRepairsOptions;
-    existingCustomer.selectHomeType =
-      selectHomeType || existingCustomer.selectHomeType;
-    existingCustomer.selectHomeStyle =
-      selectHomeStyle || existingCustomer.selectHomeStyle;
-    existingCustomer.numberOfBedrooms =
-      numberOfBedrooms || existingCustomer.numberOfBedrooms;
-    existingCustomer.numberOfStories =
-      numberOfStories || existingCustomer.numberOfStories;
-    existingCustomer.paymentMethod =
-      paymentMethod || existingCustomer.paymentMethod;
-    existingCustomer.message = message || existingCustomer.message;
+    // Update only the fields provided in the request body
+    if (firstName) existingCustomer.firstName = firstName;
+    if (lastName) existingCustomer.lastName = lastName;
+    if (email) existingCustomer.email = email;
+    if (contactNumber) existingCustomer.contactNumber = contactNumber;
+    if (selectedDate) existingCustomer.selectedDate = selectedDate;
+    if (selectedTimeSlot) existingCustomer.selectedTimeSlot = selectedTimeSlot;
+    if (makeAndModel) existingCustomer.makeAndModel = makeAndModel;
+    if (registrationNo) existingCustomer.registrationNo = registrationNo;
+    if (awareOfCancellationPolicy !== undefined) {
+      existingCustomer.awareOfCancellationPolicy = awareOfCancellationPolicy;
+    }
+    if (howDidYouHearAboutUs)
+      existingCustomer.howDidYouHearAboutUs = howDidYouHearAboutUs;
+    if (paymentMethod) existingCustomer.paymentMethod = paymentMethod;
+    if (totalPrice) existingCustomer.totalPrice = totalPrice;
 
-    // Save the updated booking
+    // Save the updated customer data
     await existingCustomer.save();
 
     return res
