@@ -16,7 +16,6 @@ const getCustomerById = asyncHandler(async (req, res, next) => {
         message: "Invalid ID format.",
       });
     }
-
     // Fetch the customer by ID
     const customer = await Customer.findById(id);
 
@@ -56,6 +55,8 @@ const getcustomerBooking = asyncHandler(async (req, res, next) => {
     if (search) {
       const regex = new RegExp(search, "i");
       query.$or = [
+        { firstName: { $regex: regex } },
+        { lastName: { $regex: regex } },
         { email: { $regex: regex } },
         { contactNumber: { $regex: regex } },
         { selectedTimeSlot: { $regex: regex } },
@@ -111,7 +112,6 @@ const deleteCustomerById = asyncHandler(async (req, res, next) => {
 
     // Delete the customer by ID
     const result = await Customer.findByIdAndDelete(id);
-    console.log("result", result);
 
     // Unblock the time slot
     const parsedDate = new Date(result.selectedDate);
