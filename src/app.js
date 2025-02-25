@@ -17,6 +17,7 @@ app.use(
       "https://www.sandbox.paypal.com",
       "https://zacsgutters.vercel.app",
       "https://high-oaks-media-crm.vercel.app",
+      "https://ferndale-autos-booking-frontend.vercel.app",
     ],
     credentials: true,
     secure: false,
