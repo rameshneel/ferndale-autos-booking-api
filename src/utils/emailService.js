@@ -90,7 +90,7 @@ export const sendCustomerConfirmationEmail = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>Your Booking is Confirmed!</h1>
+          <h1>Your Booking is Confirmed!</h1> 
         </div>
         <div class="content">
           <p>Dear ${customer.customerName},</p>
@@ -104,9 +104,6 @@ export const sendCustomerConfirmationEmail = async (
             <p><strong>Amount Paid:</strong> ${formatCurrency(totalPrice)}</p>
             <p><strong>Payment Method:</strong> ${paymentMethod}</p>
             <p><strong>Payment Status:</strong> ${paymentStatus}</p>
-            <p><strong>How did you hear about us?</strong> ${
-              howDidYouHearAboutUs || "N/A"
-            }</p>
           </div>
           
           <p>We're looking forward to serving you. If you need to make any changes, please contact us at least 24 hours before your appointment.</p>
