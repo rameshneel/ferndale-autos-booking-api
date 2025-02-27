@@ -268,20 +268,25 @@ const capturePayment = asyncHandler(async (req, res, next) => {
         captureDetails.purchase_units[0].payments.captures[0].id;
       await customer.save();
       const bookingDetails = {
-        date: customer.selectedDate,
-        timeSlot: customer.selectedTimeSlot,
-        amount: purchase_units[0].amount.value,
-        serviceDescription: customer.selectService,
+        selectedDate: customer.selectedDate,
+        selectedTimeSlot: customer.selectedTimeSlot,
+        totalPrice: parseFloat(purchase_units[0].amount.value),
+        serviceDescription: `Vehicle: ${customer.makeAndModel}, Registration: ${customer.registrationNo}`,
+        howDidYouHearAboutUs: customer.howDidYouHearAboutUs,
+        paymentMethod: customer.paymentMethod,
+        paymentStatus:
+          customer.paymentStatus === "completed" ? "Completed" : "Pending",
       };
 
       // Send confirmation email to the customer
-      // await sendCustomerConfirmationEmail(customer, bookingDetails);
-      // // Send notification email to the admin
-      // await sendAdminNotificationEmail(
-      //   customer,
-      //   bookingDetails,
-      //   captureDetails
-      // );
+      await sendCustomerConfirmationEmail(customer, bookingDetails);
+
+      // Send notification email to the admin
+      await sendAdminNotificationEmail(
+        customer,
+        bookingDetails,
+        captureDetails
+      );
 
       console.log(
         `Payment captured successfully for customer: ${customer.email}`

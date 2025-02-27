@@ -39,7 +39,7 @@ const formatDate = (dateString) => {
 // Send email function
 const sendEmail = async (to, subject, html) => {
   const mailOptions = {
-    from: 'Booking <enquiries@zacsgutters.co.uk>',
+    from: "Booking <ferndaleautos@gmail.com>",
     to,
     subject,
     html,
@@ -54,19 +54,20 @@ const sendEmail = async (to, subject, html) => {
     throw new Error("Failed to send email");
   }
 };
+
 export const sendCustomerConfirmationEmail = async (
   customer,
   bookingDetails
 ) => {
-  const { date, timeSlot, amount, serviceDescription } = bookingDetails;
-
-  // Determine service-specific options to include in the email
-  let serviceOptions = '';
-  if (serviceDescription === 'Gutter Cleaning' && customer.gutterCleaningOptions.length > 0) {
-    serviceOptions = `<p><strong>Gutter Cleaning Checked:</strong> ${customer.gutterCleaningOptions.join(', ')}</p>`;
-  } else if (serviceDescription === 'Gutter Repair' && customer.gutterRepairsOptions.length > 0) {
-    serviceOptions = `<p><strong>Gutter Repair Checked:</strong> ${customer.gutterRepairsOptions.join(', ')}</p>`;
-  }
+  const {
+    selectedDate,
+    selectedTimeSlot,
+    totalPrice,
+    serviceDescription,
+    howDidYouHearAboutUs,
+    paymentMethod,
+    paymentStatus,
+  } = bookingDetails;
 
   const emailSubject = "Your Booking is Confirmed!";
   const emailBody = `
@@ -77,13 +78,13 @@ export const sendCustomerConfirmationEmail = async (
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Booking Confirmation</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #232e35; margin: 0; padding: 0; background-color: #01669A; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #FF0000; color: black; padding: 20px; text-align: center; }
-        .content { background-color: #f9f9f9; padding: 20px; border-radius: 5px; }
-        .booking-details { background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 5px; padding: 15px; margin-top: 20px; }
+        .header { background-color: #232e35; color: #ffffff; padding: 20px; text-align: center; }
+        .content { background-color: #ffffff; padding: 20px; border-radius: 5px; }
+        .booking-details { background-color: #f0f0f0; border: 1px solid #e0e0e0; border-radius: 5px; padding: 15px; margin-top: 20px; }
         .footer { margin-top: 20px; font-size: 12px; color: #888; text-align: center; }
-        .btn { display: inline-block; padding: 10px 20px; background-color: #FF0000; color: white; text-decoration: none; border-radius: 5px; }
+        .btn { display: inline-block; padding: 10px 20px; background-color: #3B82F6; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-weight: 500; transition: background-color 0.3s; }
       </style>
     </head>
     <body>
@@ -97,22 +98,30 @@ export const sendCustomerConfirmationEmail = async (
           
           <div class="booking-details">
             <h2>Booking Details</h2>
-            <p><strong>Date:</strong> ${formatDate(date)}</p>
-            <p><strong>Time:</strong> ${timeSlot}</p>
-            <p><strong>Service:</strong> ${serviceDescription}, ${customer.numberOfBedrooms}, ${customer.selectHomeStyle}</p>
-            ${serviceOptions}
-            <p><strong>Amount Paid:</strong>£ ${formatCurrency(amount)}</p>
+            <p><strong>Date:</strong> ${formatDate(selectedDate)}</p>
+            <p><strong>Time:</strong> ${selectedTimeSlot}</p>
+            <p><strong>Service:</strong> ${serviceDescription}</p>
+            <p><strong>Amount Paid:</strong> ${formatCurrency(totalPrice)}</p>
+            <p><strong>Payment Method:</strong> ${paymentMethod}</p>
+            <p><strong>Payment Status:</strong> ${paymentStatus}</p>
+            <p><strong>How did you hear about us?</strong> ${
+              howDidYouHearAboutUs || "N/A"
+            }</p>
           </div>
           
           <p>We're looking forward to serving you. If you need to make any changes, please contact us at least 24 hours before your appointment.</p>
           
           <p>For any questions or assistance, please don't hesitate to reach out to us:</p>
           <p>
-            <a href="mailto:${process.env.COMPANY_EMAIL}" class="btn" style="margin-left: 10px;">Email Us</a>
+            <a href="mailto:${
+              process.env.COMPANY_EMAIL
+            }" class="btn">Email Us</a>
           </p>
         </div>
         <div class="footer">
-          <p>&copy; ${new Date().getFullYear()} ${process.env.COMPANY_NAME}. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} ${
+    process.env.COMPANY_NAME
+  }. All rights reserved.</p>
           <p>This is an automated email. Please do not reply directly to this message.</p>
         </div>
       </div>
@@ -122,21 +131,17 @@ export const sendCustomerConfirmationEmail = async (
 
   await sendEmail(customer.email, emailSubject, emailBody);
 };
+
 // Admin notification email
 export const sendAdminNotificationEmail = async (
   customer,
   bookingDetails,
   captureDetails
 ) => {
-  const { date, timeSlot, amount, serviceDescription } = bookingDetails;
+  const { selectedDate, selectedTimeSlot, totalPrice, serviceDescription } =
+    bookingDetails;
   const { id: orderID, status, purchase_units } = captureDetails;
- // Determine service-specific options to include in the email
- let serviceOptions = '';
- if (serviceDescription === 'Gutter Cleaning' && customer.gutterCleaningOptions.length > 0) {
-   serviceOptions = ` <tr><th>Gutter Cleaning Checked:</th><td> ${customer.gutterCleaningOptions.join(', ')}</td></tr>`;
- } else if (serviceDescription === 'Gutter Repair' && customer.gutterRepairsOptions.length > 0) {
-   serviceOptions = `<tr><th>Gutter Repair Checked:</th><td> ${customer.gutterRepairsOptions.join(', ')}</td></tr>`;
- }
+
   const emailSubject = "New Booking Alert: Customer Appointment Confirmed";
 
   const emailBody = `
@@ -147,10 +152,10 @@ export const sendAdminNotificationEmail = async (
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>New Booking Notification</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #232e35; margin: 0; padding: 0; background-color: #01669A; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #FF0000; color: black; padding: 20px; text-align: center; }
-        .content { background-color: #f9f9f9; padding: 20px; border-radius: 5px; }
+        .header { background-color: #232e35; color: #ffffff; padding: 20px; text-align: center; }
+        .content { background-color: #ffffff; padding: 20px; border-radius: 5px; }
         .section { margin-bottom: 20px; }
         .footer { margin-top: 20px; font-size: 12px; color: #888; text-align: center; }
         table { width: 100%; border-collapse: collapse; }
@@ -170,23 +175,18 @@ export const sendAdminNotificationEmail = async (
               <tr><th>Name</th><td>${customer.customerName}</td></tr>
               <tr><th>Email</th><td>${customer.email}</td></tr>
               <tr><th>Phone</th><td>${customer.contactNumber || "N/A"}</td></tr>
-               <tr><th>first Line Of Address</th><td>${
-                 customer.firstLineOfAddress || "N/A"
-               }</td></tr>
-                <tr><th>Town</th><td>${customer.town || "N/A"}</td></tr>
-                <tr><th>Post Code</th><td>${customer.postcode || "N/A"}</td></tr>
-                
             </table>
           </div>
           
           <div class="section">
             <h2>Booking Details</h2>
             <table>
-              <tr><th>Date</th><td>${formatDate(date)}</td></tr>
-              <tr><th>Time</th><td>${timeSlot}</td></tr>
-              <tr><th>Service</th><td> ${serviceDescription}, ${customer.numberOfBedrooms},${customer.selectHomeStyle}</td></tr>
-               ${serviceOptions}
-              <tr><th>Amount Paid</th><td>${formatCurrency(amount)}</td></tr>
+              <tr><th>Date</th><td>${formatDate(selectedDate)}</td></tr>
+              <tr><th>Time</th><td>${selectedTimeSlot}</td></tr>
+              <tr><th>Service</th><td> ${serviceDescription}</td></tr>
+              <tr><th>Amount Paid</th><td>${formatCurrency(
+                totalPrice
+              )}</td></tr>
             </table>
           </div>
           
@@ -211,6 +211,7 @@ export const sendAdminNotificationEmail = async (
 
   await sendEmail(process.env.ADMIN_EMAIL, emailSubject, emailBody);
 };
+
 export const sendCustomerRefundEmail = async (customer, refundDetails) => {
   const emailSubject = "Your Refund Has Been Processed";
   const emailBody = `
@@ -290,7 +291,9 @@ export const sendCustomerRefundEmail = async (customer, refundDetails) => {
           ${process.env.COMPANY_NAME}</p>
         </div>
         <div class="footer">
-          <p>&copy; ${new Date().getFullYear()} ${process.env.COMPANY_NAME}. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} ${
+    process.env.COMPANY_NAME
+  }. All rights reserved.</p>
           <p>This is an automated email. Please do not reply directly to this message.</p>
         </div>
       </div>
@@ -300,7 +303,10 @@ export const sendCustomerRefundEmail = async (customer, refundDetails) => {
 
   await sendEmail(customer.email, emailSubject, emailBody);
 };
-export const sendAdminRefundNotificationEmail = async (customer, refundDetails) => {
+export const sendAdminRefundNotificationEmail = async (
+  customer,
+  refundDetails
+) => {
   const emailSubject = "New Refund Notification";
   const emailBody = `
     <!DOCTYPE html>
@@ -381,7 +387,9 @@ export const sendAdminRefundNotificationEmail = async (customer, refundDetails) 
           ${process.env.COMPANY_NAME}</p>
         </div>
         <div class="footer">
-          <p>&copy; ${new Date().getFullYear()} ${process.env.COMPANY_NAME}. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} ${
+    process.env.COMPANY_NAME
+  }. All rights reserved.</p>
           <p>This is an automated email. Please do not reply directly to this message.</p>
         </div>
       </div>
