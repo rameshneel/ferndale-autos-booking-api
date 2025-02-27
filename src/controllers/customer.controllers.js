@@ -207,11 +207,18 @@ const createCustomerByAdmin = asyncHandler(async (req, res, next) => {
     }
 
     // Ensure that selectedDate is a weekday (Monday to Friday)
+    // const dayOfWeek = date.getDay();
+    // if (dayOfWeek === 0 || dayOfWeek === 6) {
+    //   throw new ApiError(
+    //     400,
+    //     "Bookings are only allowed from Monday to Friday."
+    //   );
+    // }
     const dayOfWeek = date.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
+    if (dayOfWeek === 0 || dayOfWeek === 1) {
       throw new ApiError(
         400,
-        "Bookings are only allowed from Monday to Friday."
+        "Bookings are only allowed from Tuesday to Saturday."
       );
     }
 
