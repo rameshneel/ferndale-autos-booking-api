@@ -183,7 +183,6 @@ const createCustomerByAdmin = asyncHandler(async (req, res, next) => {
     if (
       !firstName ||
       !lastName ||
-      !email ||
       !selectedDate ||
       !selectedTimeSlot ||
       !makeAndModel ||

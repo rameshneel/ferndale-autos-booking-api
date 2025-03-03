@@ -4,7 +4,7 @@ const customerSchema = new mongoose.Schema(
     customerName: { type: String },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    email: { type: String, required: true },
+    email: { type: String },
     contactNumber: { type: String, required: true },
     selectedDate: { type: Date, required: true },
     totalPrice: { type: Number },
