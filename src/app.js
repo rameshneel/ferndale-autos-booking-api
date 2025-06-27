@@ -18,6 +18,7 @@ app.use(
       "https://zacsgutters.vercel.app",
       "https://high-oaks-media-crm.vercel.app",
       "https://ferndale-autos-booking-frontend.vercel.app",
+      "https://www.ferndaleautos.co.uk",
     ],
     credentials: true,
     secure: false,
