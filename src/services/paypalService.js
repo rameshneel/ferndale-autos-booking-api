@@ -7,7 +7,7 @@ function client() {
 function environment() {
   let clientId = process.env.PAYPAL_CLIENT_ID;
   let clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-  return new checkoutNodeJssdk.core.SandboxEnvironment(clientId, clientSecret);
+  return new checkoutNodeJssdk.core.LiveEnvironment(clientId, clientSecret);
 }
 export async function createOrder(amount, bookingDetails, next) {
   const request = new checkoutNodeJssdk.orders.OrdersCreateRequest();
