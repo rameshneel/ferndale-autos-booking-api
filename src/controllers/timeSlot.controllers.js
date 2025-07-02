@@ -27,25 +27,16 @@ async function getAvailableSlots(date) {
 }
 const DEFAULT_TIME_SLOTS = [
   "08:30",
-  "09:00",
-  "09:30",
+  "09:15",
   "10:00",
-  "10:30",
-  "11:00",
+  "10:45",
   "11:30",
-  "12:00",
-  "12:30",
-  "13:00",
-  "13:30",
+  "12:15",
   "14:00",
-  "14:30",
-  "15:00",
+  "14:45",
   "15:30",
-  "16:00",
-  "16:30",
+  "16:15",
   "17:00",
-  "17:30",
-  "18:00",
 ];
 const getAvailableSlotsForDate = async (date) => {
   const timeSlot = await TimeSlot.findOne({ date });
@@ -244,25 +235,16 @@ const getAvailableTimeSlots = asyncHandler(async (req, res) => {
   // Default time slots
   const defaultSlots = [
     "08:30",
-    "09:00",
-    "09:30",
+    "09:15",
     "10:00",
-    "10:30",
-    "11:00",
+    "10:45",
     "11:30",
-    "12:00",
-    "12:30",
-    "13:00",
-    "13:30",
+    "12:15",
     "14:00",
-    "14:30",
-    "15:00",
+    "14:45",
     "15:30",
-    "16:00",
-    "16:30",
+    "16:15",
     "17:00",
-    "17:30",
-    "18:00",
   ];
 
   // Fetch time slots for the given date
