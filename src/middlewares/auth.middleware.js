@@ -93,14 +93,14 @@ const handleRefreshToken = asyncHandler(async (req, res, next) => {
     httpOnly: true,
     secure: true,
     sameSite: "None",
-    maxAge: 1 * 60 * 1000,
+    maxAge: 10 * 60 * 1000,
   });
   res.cookie("refreshToken", newRefreshToken, {
     httpOnly: true,
     secure: true,
     sameSite: "None",
-    // maxAge: 7 * 24 * 60 * 60 * 1000,
-    maxAge: 2 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    // maxAge: 2 * 60 * 1000,
   });
   req.user = user;
   next();
