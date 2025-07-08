@@ -44,13 +44,22 @@ const checkCustomer = asyncHandler(async (req, res, next) => {
     ) {
       throw new ApiError(400, "Required fields are missing.");
     }
-    if (!totalPrice) {
-      throw new ApiError(400, "Required fields are missing.");
-    }
 
     const date = new Date(selectedDate);
     if (isNaN(date.getTime())) {
       throw new ApiError(400, "Invalid date format. Please use YYYY-MM-DD.");
+    }
+
+    // Check if the selected date is Monday (day 1) and set price to 35
+    const dayOfWeek = date.getDay();
+    let calculatedPrice = totalPrice;
+    if (dayOfWeek === 1) {
+      // Monday
+      calculatedPrice = 35;
+    }
+
+    if (!calculatedPrice) {
+      throw new ApiError(400, "Required fields are missing.");
     }
 
     const currentDate = new Date();
@@ -59,8 +68,7 @@ const checkCustomer = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, "Bookings for today are not allowed.");
     }
 
-    // Ensure that selectedDate is a weekday (Monday to Friday)
-    const dayOfWeek = date.getDay();
+    // Ensure that selectedDate is a weekday (Monday to Saturday)
     if (dayOfWeek === 0) {
       throw new ApiError(
         400,
@@ -93,7 +101,13 @@ const checkCustomer = asyncHandler(async (req, res, next) => {
     logger.info(`Customer booked successfully: ${email}`);
     return res
       .status(201)
-      .json(new ApiResponse(200, {}, "Check Availability successful"));
+      .json(
+        new ApiResponse(
+          200,
+          { calculatedPrice },
+          "Check Availability successful"
+        )
+      );
   } catch (error) {
     logger.error(`Error Checking Availability for customer: ${error.message}`);
     next(error);
@@ -141,14 +155,21 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, "Invalid date format. Please use YYYY-MM-DD.");
     }
 
+    // Check if the selected date is Monday (day 1) and set price to 35
+    const dayOfWeek = date.getDay();
+    let calculatedPrice = totalPrice;
+    if (dayOfWeek === 1) {
+      // Monday
+      calculatedPrice = 35;
+    }
+
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
     if (date.toDateString() === currentDate.toDateString()) {
       throw new ApiError(400, "Bookings for today are not allowed.");
     }
 
-    // Ensure that selectedDate is a weekday (Monday to Friday)
-    const dayOfWeek = date.getDay();
+    // Ensure that selectedDate is a weekday (Monday to Saturday)
     if (dayOfWeek === 0) {
       throw new ApiError(
         400,
@@ -175,7 +196,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       contactNumber,
       selectedDate: formattedDate,
       selectedTimeSlot,
-      totalPrice,
+      totalPrice: calculatedPrice,
       makeAndModel,
       registrationNo,
       awareOfCancellationPolicy,
@@ -202,7 +223,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
     // Handle PayPal payment if applicable
     if (paymentMethod === "PayPal") {
       const order = await paypalService.createOrder(
-        totalPrice,
+        calculatedPrice,
         {
           selectedDate,
           selectedTimeSlot,

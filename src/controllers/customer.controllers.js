@@ -38,19 +38,47 @@ const getCustomerById = asyncHandler(async (req, res, next) => {
     next(new ApiError(500, "Internal server error."));
   }
 });
+
 const getcustomerBooking = asyncHandler(async (req, res, next) => {
   try {
-    // Extract page, limit, and search from query parameters
-    let { page = 1, limit = 10, search } = req.query;
+    // 🧹 Always clean invalid slot times before fetching customers
+    const allowedTimes = [
+      "08:30",
+      "09:15",
+      "10:00",
+      "10:45",
+      "11:30",
+      "12:15",
+      "14:00",
+      "14:45",
+      "15:30",
+      "16:15",
+      "17:00",
+    ];
 
-    // Convert to integers and set defaults
+    const timeSlots = await TimeSlot.find();
+
+    for (const ts of timeSlots) {
+      const originalCount = ts.slots.length;
+      ts.slots = ts.slots.filter((slot) => allowedTimes.includes(slot.time));
+      const cleanedCount = ts.slots.length;
+
+      if (originalCount !== cleanedCount) {
+        console.log(
+          `🧹 Cleaned ${originalCount - cleanedCount} invalid slots from ${
+            ts.date.toISOString().split("T")[0]
+          }`
+        );
+        await ts.save();
+      }
+    }
+
+    // 🔍 Pagination + Search
+    let { page = 1, limit = 10, search } = req.query;
     page = parseInt(page, 10);
     limit = parseInt(limit, 10);
-
-    // Calculate the starting index
     const startIndex = (page - 1) * limit;
 
-    // Build the query object for filtering
     const query = {};
     if (search) {
       const regex = new RegExp(search, "i");
@@ -64,20 +92,16 @@ const getcustomerBooking = asyncHandler(async (req, res, next) => {
         { paymentStatus: { $regex: regex } },
         { refundStatus: { $regex: regex } },
         { bookedBy: { $regex: regex } },
-        // Add any additional fields as needed
       ];
     }
 
-    // Fetch the total number of customers based on query
     const totalCustomers = await Customer.countDocuments(query);
 
-    // Fetch the customers for the current page with filtering
     const customers = await Customer.find(query)
       .skip(startIndex)
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    // Calculate the total number of pages
     const totalPages = Math.ceil(totalCustomers / limit);
 
     return res.status(200).json(
@@ -97,6 +121,66 @@ const getcustomerBooking = asyncHandler(async (req, res, next) => {
     next(new ApiError(500, "Internal server error."));
   }
 });
+
+// const getcustomerBooking = asyncHandler(async (req, res, next) => {
+//   try {
+//     // Extract page, limit, and search from query parameters
+//     let { page = 1, limit = 10, search } = req.query;
+
+//     // Convert to integers and set defaults
+//     page = parseInt(page, 10);
+//     limit = parseInt(limit, 10);
+
+//     // Calculate the starting index
+//     const startIndex = (page - 1) * limit;
+
+//     // Build the query object for filtering
+//     const query = {};
+//     if (search) {
+//       const regex = new RegExp(search, "i");
+//       query.$or = [
+//         { firstName: { $regex: regex } },
+//         { lastName: { $regex: regex } },
+//         { email: { $regex: regex } },
+//         { contactNumber: { $regex: regex } },
+//         { selectedTimeSlot: { $regex: regex } },
+//         { paymentMethod: { $regex: regex } },
+//         { paymentStatus: { $regex: regex } },
+//         { refundStatus: { $regex: regex } },
+//         { bookedBy: { $regex: regex } },
+//         // Add any additional fields as needed
+//       ];
+//     }
+
+//     // Fetch the total number of customers based on query
+//     const totalCustomers = await Customer.countDocuments(query);
+
+//     // Fetch the customers for the current page with filtering
+//     const customers = await Customer.find(query)
+//       .skip(startIndex)
+//       .limit(limit)
+//       .sort({ createdAt: -1 });
+
+//     // Calculate the total number of pages
+//     const totalPages = Math.ceil(totalCustomers / limit);
+
+//     return res.status(200).json(
+//       new ApiResponse(
+//         200,
+//         {
+//           customers,
+//           totalCustomers,
+//           totalPages,
+//           currentPage: page,
+//         },
+//         "Customer data retrieved successfully."
+//       )
+//     );
+//   } catch (error) {
+//     console.error("Error fetching customer data:", error);
+//     next(new ApiError(500, "Internal server error."));
+//   }
+// });
 const deleteCustomerById = asyncHandler(async (req, res, next) => {
   try {
     // Extract customer ID from request parameters
@@ -199,25 +283,25 @@ const createCustomerByAdmin = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, "Invalid date format. Please use YYYY-MM-DD.");
     }
 
+    // Check if the selected date is Monday (day 1) and set price to 35
+    const dayOfWeek = date.getDay();
+    let calculatedPrice = totalPrice;
+    if (dayOfWeek === 1) {
+      // Monday
+      calculatedPrice = 35;
+    }
+
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
     if (date.toDateString() === currentDate.toDateString()) {
       throw new ApiError(400, "Bookings for today are not allowed.");
     }
 
-    // Ensure that selectedDate is a weekday (Monday to Friday)
-    // const dayOfWeek = date.getDay();
-    // if (dayOfWeek === 0 || dayOfWeek === 6) {
-    //   throw new ApiError(
-    //     400,
-    //     "Bookings are only allowed from Monday to Friday."
-    //   );
-    // }
-    const dayOfWeek = date.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 1) {
+    // Ensure that selectedDate is a weekday (Monday to Saturday)
+    if (dayOfWeek === 0) {
       throw new ApiError(
         400,
-        "Bookings are only allowed from Tuesday to Saturday."
+        "Bookings are only allowed from Monday to Saturday."
       );
     }
 
@@ -240,11 +324,10 @@ const createCustomerByAdmin = asyncHandler(async (req, res, next) => {
       contactNumber,
       selectedDate: formattedDate,
       selectedTimeSlot,
-      totalPrice,
+      totalPrice: calculatedPrice,
       makeAndModel,
       registrationNo,
       paymentStatus: "completed",
-      totalPrice: "43.20",
       paymentMethod: "Cash",
       bookedBy: "admin",
     });
@@ -351,7 +434,21 @@ const updateCustomerByAdmin = asyncHandler(async (req, res, next) => {
     if (howDidYouHearAboutUs)
       existingCustomer.howDidYouHearAboutUs = howDidYouHearAboutUs;
     if (paymentMethod) existingCustomer.paymentMethod = paymentMethod;
-    if (totalPrice) existingCustomer.totalPrice = totalPrice;
+
+    // Apply Monday pricing logic if date or price is being updated
+    if (selectedDate || totalPrice) {
+      const dateToCheck = selectedDate || existingCustomer.selectedDate;
+      const date = new Date(dateToCheck);
+      const dayOfWeek = date.getDay();
+      let calculatedPrice = totalPrice || existingCustomer.totalPrice;
+
+      if (dayOfWeek === 1) {
+        // Monday
+        calculatedPrice = 35;
+      }
+
+      existingCustomer.totalPrice = calculatedPrice;
+    }
 
     // Save the updated customer data
     await existingCustomer.save();
