@@ -60,8 +60,8 @@ const getAvailableSlotsForDate = async (date) => {
       const slotTimeMinutes = slotHour * 60 + slotMinute;
       const currentTimeMinutes = currentHour * 60 + currentMinute;
 
-      // Only show slots that are at least 30 minutes in the future
-      return slotTimeMinutes > currentTimeMinutes + 30;
+      // Only show slots that are at least 45 minutes in the future
+      return slotTimeMinutes > currentTimeMinutes + 45;
     });
   }
 
