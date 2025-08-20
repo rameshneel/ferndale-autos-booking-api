@@ -64,9 +64,9 @@ const checkCustomer = asyncHandler(async (req, res, next) => {
 
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
-    if (date.toDateString() === currentDate.toDateString()) {
-      throw new ApiError(400, "Bookings for today are not allowed.");
-    }
+    // if (date.toDateString() === currentDate.toDateString()) {
+    //   throw new ApiError(400, "Bookings for today are not allowed.");
+    // }
 
     // Ensure that selectedDate is a weekday (Monday to Saturday)
     if (dayOfWeek === 0) {
@@ -165,9 +165,9 @@ const createCustomer = asyncHandler(async (req, res, next) => {
 
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
-    if (date.toDateString() === currentDate.toDateString()) {
-      throw new ApiError(400, "Bookings for today are not allowed.");
-    }
+    // if (date.toDateString() === currentDate.toDateString()) {
+    //   throw new ApiError(400, "Bookings for today are not allowed.");
+    // }
 
     // Ensure that selectedDate is a weekday (Monday to Saturday)
     if (dayOfWeek === 0) {
