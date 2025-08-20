@@ -222,8 +222,66 @@ const unblockTimeSlots = asyncHandler(async (req, res) => {
   await timeSlot.save();
   res.json(new ApiResponse(200, timeSlot, "Time slots unblocked successfully"));
 });
+// const getAvailableTimeSlots = asyncHandler(async (req, res) => {
+//   const { date } = req.query; // Date ko query parameter se lete hain
+
+//   if (!date) {
+//     throw new ApiError(400, "Date is required.");
+//   }
+
+//   const parsedDate = new Date(date);
+//   parsedDate.setUTCHours(0, 0, 0, 0);
+
+//   // Default time slots
+//   const defaultSlots = [
+//     "08:30",
+//     "09:15",
+//     "10:00",
+//     "10:45",
+//     "11:30",
+//     "12:15",
+//     "14:00",
+//     "14:45",
+//     "15:30",
+//     "16:15",
+//     "17:00",
+//   ];
+
+//   // Fetch time slots for the given date
+//   const timeSlot = await TimeSlot.findOne({ date: parsedDate });
+
+//   // Initialize slots with their statuses
+//   const slotsWithStatus = defaultSlots.map((slotTime) => {
+//     const existingSlot = timeSlot
+//       ? timeSlot.slots.find((s) => s.time === slotTime)
+//       : null;
+
+//     if (existingSlot) {
+//       if (existingSlot.bookedBy) {
+//         return {
+//           time: slotTime,
+//           status: "Booked",
+//           bookedBy: existingSlot.bookedBy,
+//         };
+//       }
+//       if (existingSlot.blockedBy) {
+//         return {
+//           time: slotTime,
+//           status: "Blocked",
+//           blockedBy: existingSlot.blockedBy,
+//         };
+//       }
+//     }
+
+//     return { time: slotTime, status: "Available" };
+//   });
+
+//   res.json(
+//     new ApiResponse(200, slotsWithStatus, "Time slots fetched successfully")
+//   );
+// });
 const getAvailableTimeSlots = asyncHandler(async (req, res) => {
-  const { date } = req.query; // Date ko query parameter se lete hain
+  const { date } = req.query;
 
   if (!date) {
     throw new ApiError(400, "Date is required.");
@@ -247,11 +305,38 @@ const getAvailableTimeSlots = asyncHandler(async (req, res) => {
     "17:00",
   ];
 
+  // Check if selected date is today
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
+  const isToday = parsedDate.toDateString() === currentDate.toDateString();
+
+  // Get current time for filtering
+  const currentTime = new Date();
+  const currentHour = currentTime.getHours();
+  const currentMinute = currentTime.getMinutes();
+  const currentTimeString = `${currentHour
+    .toString()
+    .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+
+  // Filter slots based on current time if it's today
+  let availableSlots = defaultSlots;
+  if (isToday) {
+    availableSlots = defaultSlots.filter((slotTime) => {
+      // Convert slot time to comparable format
+      const [slotHour, slotMinute] = slotTime.split(":").map(Number);
+      const slotTimeMinutes = slotHour * 60 + slotMinute;
+      const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+      // Only show slots that are at least 30 minutes in the future
+      return slotTimeMinutes > currentTimeMinutes + 30;
+    });
+  }
+
   // Fetch time slots for the given date
   const timeSlot = await TimeSlot.findOne({ date: parsedDate });
 
   // Initialize slots with their statuses
-  const slotsWithStatus = defaultSlots.map((slotTime) => {
+  const slotsWithStatus = availableSlots.map((slotTime) => {
     const existingSlot = timeSlot
       ? timeSlot.slots.find((s) => s.time === slotTime)
       : null;
