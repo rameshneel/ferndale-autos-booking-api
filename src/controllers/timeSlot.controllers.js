@@ -88,12 +88,21 @@ const getAvailableSlotsForDate = async (date) => {
 };
 const getAvailableTimeSlotsForForm = asyncHandler(async (req, res) => {
   console.log("testing");
+  console.log("req.query:", req.query);
+  console.log("req.query.date:", req.query.date);
 
   const { date } = req.query;
+  console.log("Extracted date:", date);
+  console.log("Type of date:", typeof date);
+
   if (!date) throw new ApiError(400, "Date is required.");
 
   const parsedDate = new Date(date);
+  console.log("Parsed date:", parsedDate);
+  console.log("Parsed date ISO string:", parsedDate.toISOString());
+
   parsedDate.setUTCHours(0, 0, 0, 0); // Normalize the date
+  console.log("Normalized date:", parsedDate);
 
   const slotsWithStatus = await getAvailableSlotsForDate(parsedDate);
   res
