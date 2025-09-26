@@ -87,7 +87,12 @@ const getAvailableSlotsForDate = async (date) => {
   });
 };
 const getAvailableTimeSlotsForForm = asyncHandler(async (req, res) => {
-  console.log("testing");
+  console.log("=== TIMEZONE DEBUG START ===");
+  console.log(
+    "Server timezone:",
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
+  console.log("Server current time:", new Date().toISOString());
   console.log("req.query:", req.query);
   console.log("req.query.date:", req.query.date);
 
@@ -97,12 +102,60 @@ const getAvailableTimeSlotsForForm = asyncHandler(async (req, res) => {
 
   if (!date) throw new ApiError(400, "Date is required.");
 
-  const parsedDate = new Date(date);
-  console.log("Parsed date:", parsedDate);
-  console.log("Parsed date ISO string:", parsedDate.toISOString());
+  // Parse date based on format
+  let parsedDate;
+
+  // Check if date is in DD/MM/YYYY format (from React DatePicker)
+  if (date.includes("/")) {
+    const [day, month, year] = date.split("/");
+    console.log(
+      "DD/MM/YYYY format detected - day:",
+      day,
+      "month:",
+      month,
+      "year:",
+      year
+    );
+
+    // Create date in YYYY-MM-DD format to avoid timezone issues
+    const isoDateString = `${year}-${month.padStart(2, "0")}-${day.padStart(
+      2,
+      "0"
+    )}`;
+    console.log("ISO date string:", isoDateString);
+
+    parsedDate = new Date(isoDateString + "T00:00:00Z"); // Force UTC
+    console.log("Parsed from DD/MM/YYYY:", parsedDate);
+    console.log("Parsed ISO:", parsedDate.toISOString());
+  }
+  // Check if date is in YYYY-MM-DD format
+  else if (date.includes("-")) {
+    console.log("YYYY-MM-DD format detected");
+    parsedDate = new Date(date + "T00:00:00Z"); // Force UTC
+    console.log("Parsed from YYYY-MM-DD:", parsedDate);
+    console.log("Parsed ISO:", parsedDate.toISOString());
+  }
+  // Fallback to default parsing
+  else {
+    console.log("Default parsing");
+    parsedDate = new Date(date);
+    console.log("Default parsed:", parsedDate);
+    console.log("Default parsed ISO:", parsedDate.toISOString());
+  }
+
+  // Validate the parsed date
+  if (isNaN(parsedDate.getTime())) {
+    console.log("Invalid date parsed, throwing error");
+    throw new ApiError(
+      400,
+      "Invalid date format. Please use DD/MM/YYYY or YYYY-MM-DD format."
+    );
+  }
 
   parsedDate.setUTCHours(0, 0, 0, 0); // Normalize the date
-  console.log("Normalized date:", parsedDate);
+  console.log("Final normalized date:", parsedDate);
+  console.log("Final normalized ISO:", parsedDate.toISOString());
+  console.log("=== TIMEZONE DEBUG END ===");
 
   const slotsWithStatus = await getAvailableSlotsForDate(parsedDate);
   res
