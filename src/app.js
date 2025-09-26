@@ -19,6 +19,7 @@ app.use(
       "https://high-oaks-media-crm.vercel.app",
       "https://ferndale-autos-booking-frontend.vercel.app",
       "https://www.ferndaleautos.co.uk",
+      "https://www.websitestagingserver.org",
     ],
     credentials: true,
     secure: false,
